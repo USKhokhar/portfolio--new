@@ -6,5 +6,6 @@
 }
 
 body {
-    background: #ff1;
+    background: url('/assets/bg-sky.jpg') no-repeat center center;
+    background-size: cover;
 }
