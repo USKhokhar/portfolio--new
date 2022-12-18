@@ -1,55 +1,101 @@
-import * as THREE from 'three';
+import * as THREE from 'three'
 
+let scene, lightScene, lightPortal, lightPortalX, lightPortalXX,camera, renderer, geoPart, matePart, geoSmoke, mateSmoke, clock, partArr = [], smokeArr = []
 
-let scene, camera, renderer, planet
+function init() {
+    scene = new THREE.Scene()
 
-function init(){
-  // Init scene
-	scene = new THREE.Scene();
+    lightScene = new THREE.DirectionalLight(0xffffff, 0.45)
+    lightScene.position.set(0, 0, 1)
+    scene.add(lightScene)
 
-	// Init camera (PerspectiveCamera)
-	camera = new THREE.PerspectiveCamera(
-		75,
-		window.innerWidth / window.innerHeight,
-		0.1,
-		1000
-	);
+    // portal light
+    lightPortal = new THREE.PointLight(0x062d89, 10, 450, 2)
+    lightPortal.position.set(0, 0, 150)
+    scene.add(lightPortal)
+    
+    lightPortalX = new THREE.PointLight(0x000C66, 5, 350, 1)
+    lightPortalX.position.set(0, 0, 150)
+    scene.add(lightPortalX)
 
-	// Init renderer
-	renderer = new THREE.WebGLRenderer({ alpha: true, });
+    lightPortalXX = new THREE.PointLight(0xA30000, 20, 250, 2)
+    lightPortalXX.position.set(0, 0, 50)
+    scene.add(lightPortalXX)
 
-	// Set size (whole window)
-	renderer.setSize(window.innerWidth, window.innerHeight);
+    // camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000)
+    camera.position.z = 1000
+    scene.add(camera)
 
-	// Render to canvas element
-	document.body.appendChild(renderer.domElement);
+    // renderer
+    renderer = new THREE.WebGLRenderer({alpha: true,})
+    renderer.setSize(window.innerWidth, window.innerHeight)
 
-	// Init BoxGeometry object (rectangular cuboid)
-	const geometry = new THREE.SphereGeometry(2);
-
-	// Create material with color
-	// const material = new THREE.MeshBasicMaterial({ color: 0x17131a });
-
-	// Add texture - 
-	const texture = new THREE.TextureLoader().load('/assets/earth-8k.jpg');
-
-	// Create material with texture
-	const material = new THREE.MeshBasicMaterial({ map: texture });
-
-	// Create mesh with geo and material
-	planet = new THREE.Mesh(geometry, material);
-	// Add to scene
-	scene.add(planet);
-
-	// Position camera
-	camera.position.z = 5;
+    document.body.appendChild(renderer.domElement)
+    setParticle()
 }
 
-function animate() {
-  requestAnimationFrame(animate)
-  planet.rotation.y += 0.002
+function setParticle() {
+    let loader = new THREE.TextureLoader()
 
-  renderer.render(scene, camera)
+    loader.load('/assets/smoke.png', function(texture){
+        geoPart = new THREE.PlaneGeometry(250, 250)
+        matePart = new THREE.MeshStandardMaterial({
+            map: texture,
+            transparent: true,
+        })
+        geoSmoke = new THREE.PlaneGeometry(1200, 800)
+        mateSmoke = new THREE.MeshStandardMaterial({
+            map: texture,
+            transparent: true,
+        })
+
+        for(let i = 880; i > 250; i--){
+            let particle = new THREE.Mesh(geoPart, matePart)
+            particle.position.set(
+                0.45 * i * Math.cos((4 * i * Math.PI) / 180),
+                0.45 * i * Math.sin((4 * i * Math.PI) / 180),
+                0.1 * i 
+            )
+            particle.rotation.z = Math.random() * 360
+            partArr.push(particle)
+            scene.add(particle)
+        }
+        for(let i = 0; i < 40; i++){
+            let particle = new THREE.Mesh(geoSmoke, mateSmoke)
+            particle.position.set(
+                Math.random() * 1000-500,
+                Math.random() * 400-200,
+                25
+            )
+            particle.rotation.z = Math.random() * 360
+            particle.material.opacity = 0.3
+            smokeArr.push(particle)
+            scene.add(particle)
+        }
+
+        clock = new THREE.Clock()
+        animate()
+    })
+}
+
+function animate(){ 
+    let delta = clock.getDelta()
+    partArr.forEach(p => {
+        p.rotation.z -= delta * 1.5
+    })
+    smokeArr.forEach(p => {
+        p.rotation.z -= delta * 0.2
+    })
+
+    if(Math.random() > 0.9){
+        lightPortal.power = 350 + Math.random() * 500
+        lightPortalX.power = 350 + Math.random() * 500
+        lightPortalXX.power = 350 + Math.random() * 500
+    }
+
+    renderer.render(scene, camera)
+    requestAnimationFrame(animate)
 }
 
 function onResize() {
@@ -60,5 +106,5 @@ function onResize() {
 
 window.addEventListener('resize', onResize, false)
 
+
 init()
-animate()
